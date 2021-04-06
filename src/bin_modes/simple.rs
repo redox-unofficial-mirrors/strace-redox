@@ -3,7 +3,11 @@ use std::{env, io::Result, process};
 use strace::{Flags, Pid, Tracer};
 
 pub struct Opt {
-    pub cmd: Vec<String>,
+    pub cmd: Command,
+}
+
+pub enum Command {
+    Cmdline(Vec<String>),
 }
 
 pub fn parse_args() -> Opt {

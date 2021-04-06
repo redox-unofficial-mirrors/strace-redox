@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 bitflags = "1.1.0"
-structopt = { version = "0.2.18", optional = true }
+structopt = { version = "0.3", optional = true }
 redox_syscall = "0.2"
 
 [features]

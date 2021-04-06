@@ -17,8 +17,16 @@ pub struct Opt {
     /// Specify whether or not strace should trace more than just the
     /// top level child process
     recursive: bool,
+
     /// Specify the command and arguments to run
-    pub cmd: Vec<String>,
+    #[structopt(subcommand)]
+    pub cmd: Command,
+}
+
+#[derive(Debug, PartialEq, StructOpt)]
+pub enum Command {
+    #[structopt(external_subcommand)]
+    Cmdline(Vec<String>),
 }
 
 pub fn parse_args() -> Opt {

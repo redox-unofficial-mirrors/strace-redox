@@ -23,10 +23,13 @@ pub const TRACE_FLAGS: Flags = Flags::from_bits_truncate(
 
 fn main() -> Result<()> {
     let opt = mode::parse_args();
+    let cmd = match &opt.cmd {
+        mode::Command::Cmdline(args) => args,
+    };
 
     let mut file = None;
     for mut path in env::split_paths(&env::var_os("PATH").unwrap_or(OsString::new())) {
-        path.push(&opt.cmd[0]);
+        path.push(&cmd[0]);
         if let Ok(fd) = e(syscall::open(
             &path.as_os_str().as_bytes(),
             syscall::O_RDONLY,
@@ -45,7 +48,7 @@ fn main() -> Result<()> {
     };
 
     match e(unsafe { syscall::clone(syscall::CloneFlags::empty()) })? {
-        0 => child(fd, opt.cmd.clone()),
+        0 => child(fd, cmd.clone()),
         pid => parent(path, pid, opt),
     }
 }
