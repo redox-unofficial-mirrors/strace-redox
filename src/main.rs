@@ -31,7 +31,7 @@ fn main() -> Result<()> {
     for mut path in env::split_paths(&env::var_os("PATH").unwrap_or(OsString::new())) {
         path.push(&cmd[0]);
         if let Ok(fd) = e(syscall::open(
-            &path.as_os_str().as_bytes(),
+            path.to_str().ok_or_else(|| Error::new(std::io::ErrorKind::InvalidData, "PATH was not valid UTF-8"))?,
             syscall::O_RDONLY,
         )) {
             file = Some((path, fd));
