@@ -6,10 +6,7 @@ use std::{
     iter,
     mem::{self, MaybeUninit},
     ops::{Deref, DerefMut},
-    os::unix::{
-        fs::OpenOptionsExt,
-        io::AsRawFd,
-    },
+    os::unix::{fs::OpenOptionsExt, io::AsRawFd},
     ptr, slice,
 };
 
@@ -332,7 +329,9 @@ impl<'a> EventHandler<'a> {
         let mut events = self.iter()?;
 
         loop {
-            let event = events.next().expect("events should be an infinite stream")?;
+            let event = events
+                .next()
+                .expect("events should be an infinite stream")?;
 
             if event.cause & Flags::EVENT_ALL == event.cause {
                 callback(event)?;

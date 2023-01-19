@@ -5,6 +5,7 @@ use std::{
     mem,
     os::unix::ffi::OsStrExt,
     path::PathBuf,
+    ptr,
 };
 
 use strace::{Flags, Pid, Tracer};
@@ -30,16 +31,13 @@ fn main() -> Result<()> {
     let mut file = None;
     for mut path in env::split_paths(&env::var_os("PATH").unwrap_or(OsString::new())) {
         path.push(&cmd[0]);
-        if let Ok(fd) = e(syscall::open(
-            path.to_str().ok_or_else(|| Error::new(std::io::ErrorKind::InvalidData, "PATH was not valid UTF-8"))?,
-            syscall::O_RDONLY,
-        )) {
-            file = Some((path, fd));
+        if path.is_file() {
+            file = Some(path);
             break;
         }
     }
 
-    let (path, fd) = match file {
+    let path = match file {
         Some(inner) => inner,
         None => {
             eprintln!("Could not find that binary in $PATH");
@@ -47,36 +45,35 @@ fn main() -> Result<()> {
         },
     };
 
-    match e(unsafe { syscall::clone(syscall::CloneFlags::empty()) })? {
-        0 => child(fd, cmd.clone()),
-        pid => parent(path, pid, opt),
+    match unsafe { libc::fork() } {
+        -1 => panic!("Failed to fork()"),
+        0 => child(path, cmd.clone()),
+        pid => parent(path, pid as usize, opt),
     }
 }
 
-fn child(fd: usize, cmd_args: Vec<String>) -> Result<()> {
+fn child(path: PathBuf, cmd_args: Vec<String>) -> Result<()> {
+    let mut path = path.into_os_string();
+    path.push("\0");
+
     let mut args = Vec::new();
-    for arg in cmd_args {
-        let len = arg.len();
-        let ptr = arg.as_ptr() as usize;
+    for mut arg in cmd_args {
+        arg.push('\0');
+        let ptr = arg.as_ptr() as *const libc::c_char;
         mem::forget(arg);
-        args.push([ptr, len]);
+        args.push(ptr);
     }
-
-    let mut vars = Vec::new();
-    for (key, val) in env::vars() {
-        let combined = format!("{}={}", key, val);
-
-        let len = combined.len();
-        let ptr = combined.as_ptr() as usize;
-        mem::forget(combined);
-        vars.push([ptr, len]);
-    }
+    args.push(ptr::null());
 
     // I'm ready to be traced!
     e(syscall::kill(e(syscall::getpid())?, syscall::SIGSTOP))?;
 
-    e(syscall::fexec(fd, &args, &vars))?;
-    unreachable!("fexec can't return Ok(_)")
+    let res = unsafe { libc::execv(path.as_bytes().as_ptr() as *const _, args.as_ptr()) };
+    if res == -1 {
+        panic!("Execv failed with error {}", Error::last_os_error());
+    } else {
+        unreachable!("fexec can't return Ok(_)")
+    }
 }
 
 fn parent(path: PathBuf, pid: Pid, opt: mode::Opt) -> Result<()> {
