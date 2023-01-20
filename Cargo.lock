@@ -69,9 +69,8 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.132"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8371e4e5341c3a96db127eb2465ac681ced4c433e01dd0e938adbef26ba93ba5"
+version = "0.2.137"
+source = "git+https://gitlab.redox-os.org/redox-os/liblibc.git?branch=rust-2022-03-18#6ba4d1a527c2b53bdd5554cb219a1cd7d315d518"
 
 [[package]]
 name = "proc-macro-error"
@@ -117,9 +116,9 @@ dependencies = [
 
 [[package]]
 name = "redox_syscall"
-version = "0.2.16"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb5a58c1855b4b6819d59012155603f0b22ad30cad752600aadfcb695265519a"
+checksum = "fb02a9aee8e8c7ad8d86890f1e16b49e0bbbffc9961ff3788c31d57c98bcbf03"
 dependencies = [
  "bitflags",
 ]
@@ -129,6 +128,7 @@ name = "strace"
 version = "0.1.0"
 dependencies = [
  "bitflags",
+ "libc",
  "redox_syscall",
  "structopt",
 ]
