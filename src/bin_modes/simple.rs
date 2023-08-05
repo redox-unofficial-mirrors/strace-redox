@@ -16,7 +16,9 @@ pub fn parse_args() -> Opt {
         eprintln!("Usage: strace <path>");
         process::exit(1);
     }
-    Opt { cmd }
+    Opt {
+        cmd: Command::Cmdline(cmd),
+    }
 }
 
 pub fn inner_main(_pid: Pid, mut tracer: Tracer, _opt: Opt) -> Result<()> {
